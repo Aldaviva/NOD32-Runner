@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace NOD32_Runner
@@ -16,7 +13,10 @@ namespace NOD32_Runner
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            ServiceManager serviceManager = new ServiceManagerImpl();
+            ServiceModel serviceModel = serviceManager.GetService("ekrn");
+            FormViewModel viewModel = new FormViewModel(serviceModel, serviceManager);
+            Application.Run(new Form1(viewModel));
         }
     }
 }
