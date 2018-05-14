@@ -9,7 +9,6 @@ namespace NOD32_Runner
         public Form1(FormViewModel serviceModel)
         {
             model = serviceModel;
-
             InitializeComponent();
         }
 
@@ -20,7 +19,10 @@ namespace NOD32_Runner
 
         private void Form1_Load(object sender, System.EventArgs e)
         {
-            bindingSource.DataSource = model;
+            showGuiButton.DataBindings.Add("Enabled", model.IsGuiButtonEnabled);
+            progressBar1.DataBindings.Add("Visible", model.IsProgressBarVisible);
+            serviceEnabledCheckbox.DataBindings.Add("Enabled", model.IsServiceCheckboxEnabled);
+            serviceEnabledCheckbox.DataBindings.Add("Checked", model.IsServiceCheckboxChecked);
         }
 
         private void serviceEnabledCheckbox_Click(object sender, System.EventArgs e)

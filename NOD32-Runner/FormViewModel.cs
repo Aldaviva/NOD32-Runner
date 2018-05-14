@@ -1,33 +1,33 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using NOD32_Runner.Annotations;
+﻿using CoCo.Property;
 
 namespace NOD32_Runner
 {
-    public class FormViewModel: INotifyPropertyChanged
+    public class FormViewModel
     {
         private readonly ServiceModel serviceModel;
         private readonly ServiceManager serviceManager;
 
-        public bool IsServiceCheckboxChecked => serviceModel.Status == ServiceStatus.Started || serviceModel.Status == ServiceStatus.Starting;
-
-        public bool IsServiceCheckboxEnabled => serviceModel.Status == ServiceStatus.Started || serviceModel.Status == ServiceStatus.Stopped;
-
-        public bool IsGuiButtonEnabled => serviceModel.Status == ServiceStatus.Started;
-
-        public bool IsProgressBarVisible => serviceModel.Status == ServiceStatus.Starting || serviceModel.Status == ServiceStatus.Stopping;
+        public readonly Property<bool> IsServiceCheckboxChecked;
+        public readonly Property<bool> IsServiceCheckboxEnabled;
+        public readonly Property<bool> IsGuiButtonEnabled;
+        public readonly Property<bool> IsProgressBarVisible;
 
         public FormViewModel(ServiceModel serviceModel, ServiceManager serviceManager)
         {
             this.serviceManager = serviceManager;
             this.serviceModel = serviceModel;
-            serviceModel.PropertyChanged += (sender, args) =>
-            {
-                OnPropertyChanged(nameof(IsGuiButtonEnabled));
-                OnPropertyChanged(nameof(IsServiceCheckboxChecked));
-                OnPropertyChanged(nameof(IsServiceCheckboxEnabled));
-                OnPropertyChanged(nameof(IsProgressBarVisible));
-            };
+
+            IsServiceCheckboxChecked = new DerivedProperty<bool>(new[] { serviceModel.Status },
+                () => serviceModel.Status.Value == ServiceStatus.Started || serviceModel.Status.Value == ServiceStatus.Starting);
+
+            IsServiceCheckboxEnabled = new DerivedProperty<bool>(new[] { serviceModel.Status },
+                () => serviceModel.Status.Value == ServiceStatus.Started || serviceModel.Status.Value == ServiceStatus.Stopped);
+
+            IsGuiButtonEnabled = new DerivedProperty<bool>(new[] { serviceModel.Status },
+                () => serviceModel.Status.Value == ServiceStatus.Started);
+
+            IsProgressBarVisible = new DerivedProperty<bool>(new[] { serviceModel.Status },
+                () => serviceModel.Status.Value == ServiceStatus.Starting || serviceModel.Status.Value == ServiceStatus.Stopping);
         }
 
         public void StartService()
@@ -44,14 +44,5 @@ namespace NOD32_Runner
         {
             serviceManager.ShowGui(serviceModel);
         }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
     }
-
 }

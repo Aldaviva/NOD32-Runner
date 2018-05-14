@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Management;
 using System.ServiceProcess;
 using System.Threading.Tasks;
@@ -10,7 +9,7 @@ namespace NOD32_Runner
 {
     public interface ServiceManager
     {
-        ServiceModel GetService(String name);
+        ServiceModel GetService(string name);
         void Start(ServiceModel service);
         void Stop(ServiceModel service);
         void ShowGui(ServiceModel service);
@@ -23,35 +22,36 @@ namespace NOD32_Runner
             return new ServiceController(service.Name);
         }
 
-        public ServiceModel GetService(String name)
+        public ServiceModel GetService(string name)
         {
             var service = new ServiceModel(name);
-            service.Status = GetServiceStatus(service);
+            service.Status.Value = GetServiceStatus(service);
             return service;
         }
 
         public void Start(ServiceModel service)
         {
-            service.Status = ServiceStatus.Starting;
+            service.Status.Value = ServiceStatus.Starting;
 
             SetServiceStartMode(service, StartMode.Manual);
 
             ServiceController serviceController = GetServiceController(service);
             serviceController.Start();
 
-            Task.Run(() =>
+            Task.Run(async () =>
             {
-                using (serviceController) {
+                using (serviceController)
+                {
                     serviceController.WaitForStatus(ServiceControllerStatus.Running);
-                    Task.Delay(TimeSpan.FromSeconds(4));
-                    service.Status = ServiceStatus.Started;
+                    await Task.Delay(TimeSpan.FromSeconds(4));
+                    service.Status.Value = ServiceStatus.Started;
                 }
             });
         }
 
         public void Stop(ServiceModel service)
         {
-            service.Status = ServiceStatus.Stopping;
+            service.Status.Value = ServiceStatus.Stopping;
 
             SetServiceStartMode(service, StartMode.Disabled);
             using (ManagementObject wmiService = GetWmiService(service))
@@ -71,17 +71,34 @@ namespace NOD32_Runner
                 guiProcess.Kill();
             }
 
-            service.Status = ServiceStatus.Stopped;
+            service.Status.Value = ServiceStatus.Stopped;
         }
 
         public void ShowGui(ServiceModel service)
         {
             string installationDirectory = GetInstallationDirectory(service);
             string guiImagePath = Path.Combine(installationDirectory, "egui.exe");
-            Process.Start(guiImagePath);
+
+            bool wasGuiRunning = Process.GetProcessesByName("egui").Length != 0;
+
+            void RunGui()
+            {
+                Process.Start(guiImagePath);
+            }
+
+            RunGui();
+            if (!wasGuiRunning)
+            {
+                Task.Run(async () =>
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(250));
+                    // if GUI wasn't already running, starting it once starts it in the background, so we start it a second time to show it
+                    RunGui();
+                });
+            }
         }
 
-        private void SetServiceStartMode(ServiceModel service, StartMode startMode)
+        private static void SetServiceStartMode(ServiceModel service, StartMode startMode)
         {
             using (ManagementObject wmiService = GetWmiService(service))
             {
@@ -91,7 +108,7 @@ namespace NOD32_Runner
             }
         }
 
-        private ManagementObject GetWmiService(ServiceModel service)
+        private static ManagementObject GetWmiService(ServiceModel service)
         {
             using (var searcher = new ManagementObjectSearcher(new SelectQuery("Win32_Service", $"Name = '{service.Name}'")))
             using (ManagementObjectCollection results = searcher.Get())
@@ -105,7 +122,7 @@ namespace NOD32_Runner
             }
         }
 
-        private ServiceStatus GetServiceStatus(ServiceModel service)
+        private static ServiceStatus GetServiceStatus(ServiceModel service)
         {
             using (ServiceController serviceController = GetServiceController(service))
             {
@@ -133,7 +150,8 @@ namespace NOD32_Runner
             using (ManagementObject wmiService = GetWmiService(service))
             {
                 string serviceImagePath = (string) wmiService.GetPropertyValue("PathName");
-                string guiImagePath = Path.Combine(Path.GetDirectoryName(serviceImagePath), "..");
+                string guiImagePath =
+                    Path.Combine(Path.GetDirectoryName(serviceImagePath) ?? @"C:\Program Files\ESET\ESET NOD32 Antivirus", "..");
                 return guiImagePath;
             }
         }
@@ -159,7 +177,7 @@ namespace NOD32_Runner
                 case StartMode.Disabled:
                     return "Disabled";
                 default:
-                    throw new ArgumentException();
+                    throw new ArgumentOutOfRangeException(nameof(startMode), startMode, null);
             }
         }
     }
