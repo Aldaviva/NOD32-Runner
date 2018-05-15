@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.serviceEnabledCheckbox = new System.Windows.Forms.CheckBox();
             this.showGuiButton = new System.Windows.Forms.Button();

@@ -1,4 +1,4 @@
-﻿using CoCo.Property;
+﻿using KoKo.Property;
 
 namespace NOD32_Runner
 {
