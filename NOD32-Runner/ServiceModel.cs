@@ -1,4 +1,5 @@
-﻿using KoKo.Property;
+﻿using System.Diagnostics;
+using KoKo.Property;
 
 namespace NOD32_Runner
 {
@@ -6,6 +7,7 @@ namespace NOD32_Runner
     {
         public readonly StoredProperty<ServiceStatus> Status = new StoredProperty<ServiceStatus>(ServiceStatus.Stopped);
         public string Name { get; }
+        public Stopwatch StartupDurationStopwatch { get; } = new Stopwatch();
 
         public ServiceModel(string name)
         {

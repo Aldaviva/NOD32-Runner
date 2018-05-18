@@ -12,6 +12,9 @@ namespace NOD32_Runner
         public readonly Property<bool> IsGuiButtonEnabled;
         public readonly Property<bool> IsProgressBarVisible;
 
+        public long ElapsedStartupDurationMilliseconds => serviceModel.StartupDurationStopwatch.ElapsedMilliseconds;
+        public const int ExpectedStartupDurationMilliseconds = 12788; //experimentally derived
+
         public FormViewModel(ServiceModel serviceModel, ServiceManager serviceManager)
         {
             this.serviceManager = serviceManager;
@@ -21,13 +24,14 @@ namespace NOD32_Runner
                 () => serviceModel.Status.Value == ServiceStatus.Started || serviceModel.Status.Value == ServiceStatus.Starting);
 
             IsServiceCheckboxEnabled = new DerivedProperty<bool>(new[] { serviceModel.Status },
-                () => serviceModel.Status.Value == ServiceStatus.Started || serviceModel.Status.Value == ServiceStatus.Stopped);
+                () => serviceModel.Status.Value == ServiceStatus.Started || serviceModel.Status.Value == ServiceStatus.Stopped ||
+                      serviceModel.Status.Value == ServiceStatus.Stopping);
 
             IsGuiButtonEnabled = new DerivedProperty<bool>(new[] { serviceModel.Status },
                 () => serviceModel.Status.Value == ServiceStatus.Started);
 
             IsProgressBarVisible = new DerivedProperty<bool>(new[] { serviceModel.Status },
-                () => serviceModel.Status.Value == ServiceStatus.Starting || serviceModel.Status.Value == ServiceStatus.Stopping);
+                () => serviceModel.Status.Value == ServiceStatus.Starting);
         }
 
         public void StartService()

@@ -36,15 +36,16 @@ namespace NOD32_Runner
             SetServiceStartMode(service, StartMode.Manual);
 
             ServiceController serviceController = GetServiceController(service);
+            service.StartupDurationStopwatch.Restart();
             serviceController.Start();
 
-            Task.Run(async () =>
+            Task.Run(() =>
             {
                 using (serviceController)
                 {
                     serviceController.WaitForStatus(ServiceControllerStatus.Running);
-                    await Task.Delay(TimeSpan.FromSeconds(4));
                     service.Status.Value = ServiceStatus.Started;
+                    service.StartupDurationStopwatch.Stop();
                 }
             });
         }
@@ -145,7 +146,7 @@ namespace NOD32_Runner
             }
         }
 
-        private string GetInstallationDirectory(ServiceModel service)
+        private static string GetInstallationDirectory(ServiceModel service)
         {
             using (ManagementObject wmiService = GetWmiService(service))
             {
